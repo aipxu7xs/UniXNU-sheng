@@ -1,0 +1,31 @@
+name: cargo-diag
+on:
+  workflow_dispatch:
+jobs:
+  diag:
+    runs-on: macos-26-intel
+    steps:
+      - name: setup rust like package tools step
+        run: |
+          brew install rustup
+          rustup toolchain install 1.98.0 --profile minimal --component rust-src
+          mkdir -p "$HOME/.cargo/bin"
+          ln -sf "$(command -v rustup)" "$HOME/.cargo/bin/cargo"
+          ln -sf "$(command -v rustup)" "$HOME/.cargo/bin/rustc"
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: diagnose cargo proxy
+        run: |
+          echo "PATH=$PATH"
+          echo "--- which:"; which -a cargo rustc rustup || true
+          echo "--- cargo bin:"; ls -la "$HOME/.cargo/bin/" || true
+          echo "--- toolchains:"; rustup toolchain list || true
+          echo "--- cargo --version:"; cargo --version || true
+          echo "--- cargo +1.98.0 --version:"; cargo +1.98.0 --version || true
+          echo "--- bridge arg pattern (help):"; RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --help 2>&1 | head -5 || true
+          echo "--- dummy build-std attempt (120s, expect Compiling if arg parsing OK):"
+          mkdir -p /tmp/dummy/src
+          printf '[package]\nname="dummy"\nversion="0.1.0"\nedition="2021"\n' > /tmp/dummy/Cargo.toml
+          printf 'fn main(){println!("hi");}\n' > /tmp/dummy/src/main.rs
+          timeout 120 env RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --release --manifest-path /tmp/dummy/Cargo.toml --target arm64e-apple-ios --target-dir /tmp/dummy-target 2>&1 | head -15 || true
+          echo "diag done"
