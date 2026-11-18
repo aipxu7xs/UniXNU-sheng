@@ -78,7 +78,6 @@ jobs:
             [ -f "$(brew --prefix)/opt/llvm/bin/$t" ] || [ -f "$(brew --prefix)/opt/lld/bin/$t" ] || { echo "missing tool: $t"; ok=0; }
           done
           [ "$ok" = 1 ]
-
       - name: platform seed
         env:
           seed: ${{ secrets.UNIXNU_UNIQUE_CHIP_ID }}
