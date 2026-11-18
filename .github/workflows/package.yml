@@ -80,7 +80,7 @@ jobs:
             exit 1
           fi
       - name: seed cache identity
-        id: seed-ke
+        id: seed-key
         env:
           SEED: ${{ secrets.UNIXNU_UNIQUE_CHIP_ID }}
         run: |
