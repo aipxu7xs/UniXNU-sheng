@@ -10,22 +10,22 @@ jobs:
           brew install rustup
           rustup toolchain install 1.98.0 --profile minimal --component rust-src
           mkdir -p "$HOME/.cargo/bin"
-          ln -sf "$(command -v rustup)" "$HOME/.cargo/bin/cargo"
-          ln -sf "$(command -v rustup)" "$HOME/.cargo/bin/rustc"
+          ln -f "$(command -v rustup)" "$HOME/.cargo/bin/cargo"
+          ln -f "$(command -v rustup)" "$HOME/.cargo/bin/rustc"
           export PATH="$HOME/.cargo/bin:$PATH"
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - name: diagnose cargo proxy
         run: |
-          echo "PATH=$PATH"
-          echo "--- which:"; which -a cargo rustc rustup || true
+          echo "--- cargo bin:"; ls -la "$HOME/.cargo/bin/" | grep -E "cargo$|rustc$" || true
+          echo "--- cargo --version (expect CARGO 1.98.0, NOT rustup 1.29.0):"; cargo --version || true
           echo "--- cargo +1.98.0 --version:"; cargo +1.98.0 --version || true
-          echo "--- TEST 1: -Z AFTER build (help, should print build help):"
-          RUSTC_BOOTSTRAP=1 cargo +1.98.0 build -Z build-std=std,panic_unwind --help 2>&1 | head -8 || true
-          echo "--- TEST 2: -Z AFTER build, dummy build-std (background, 60s):"
+          echo "--- TEST 1: original bridge pattern, -Z BEFORE build (help):"
+          RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --help 2>&1 | head -8 || true
+          echo "--- TEST 2: dummy build-std with original pattern (background, 60s):"
           mkdir -p /tmp/dummy/src
           printf '[package]\nname="dummy"\nversion="0.1.0"\nedition="2021"\n' > /tmp/dummy/Cargo.toml
           printf 'fn main(){println!("hi");}\n' > /tmp/dummy/src/main.rs
-          RUSTC_BOOTSTRAP=1 cargo +1.98.0 build -Z build-std=std,panic_unwind --release --manifest-path /tmp/dummy/Cargo.toml --target arm64e-apple-ios --target-dir /tmp/dummy-target > /tmp/dummy-build.log 2>&1 &
+          RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --release --manifest-path /tmp/dummy/Cargo.toml --target arm64e-apple-ios --target-dir /tmp/dummy-target > /tmp/dummy-build.log 2>&1 &
           BUILD_PID=$!
           sleep 60
           echo "--- dummy build log after 60s (first 12 lines):"
