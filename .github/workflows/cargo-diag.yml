@@ -18,14 +18,17 @@ jobs:
         run: |
           echo "PATH=$PATH"
           echo "--- which:"; which -a cargo rustc rustup || true
-          echo "--- cargo bin:"; ls -la "$HOME/.cargo/bin/" || true
-          echo "--- toolchains:"; rustup toolchain list || true
-          echo "--- cargo --version:"; cargo --version || true
           echo "--- cargo +1.98.0 --version:"; cargo +1.98.0 --version || true
-          echo "--- bridge arg pattern (help):"; RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --help 2>&1 | head -5 || true
-          echo "--- dummy build-std attempt (120s, expect Compiling if arg parsing OK):"
+          echo "--- TEST 1: -Z AFTER build (help, should print build help):"
+          RUSTC_BOOTSTRAP=1 cargo +1.98.0 build -Z build-std=std,panic_unwind --help 2>&1 | head -8 || true
+          echo "--- TEST 2: -Z AFTER build, dummy build-std (background, 60s):"
           mkdir -p /tmp/dummy/src
           printf '[package]\nname="dummy"\nversion="0.1.0"\nedition="2021"\n' > /tmp/dummy/Cargo.toml
           printf 'fn main(){println!("hi");}\n' > /tmp/dummy/src/main.rs
-          timeout 120 env RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --release --manifest-path /tmp/dummy/Cargo.toml --target arm64e-apple-ios --target-dir /tmp/dummy-target 2>&1 | head -15 || true
+          RUSTC_BOOTSTRAP=1 cargo +1.98.0 build -Z build-std=std,panic_unwind --release --manifest-path /tmp/dummy/Cargo.toml --target arm64e-apple-ios --target-dir /tmp/dummy-target > /tmp/dummy-build.log 2>&1 &
+          BUILD_PID=$!
+          sleep 60
+          echo "--- dummy build log after 60s (first 12 lines):"
+          head -12 /tmp/dummy-build.log || true
+          kill $BUILD_PID 2>/dev/null || true
           echo "diag done"
