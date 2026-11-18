@@ -16,19 +16,19 @@ jobs:
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - name: diagnose cargo proxy
         run: |
-          echo "--- cargo bin:"; ls -la "$HOME/.cargo/bin/" | grep -E "cargo$|rustc$" || true
-          echo "--- cargo --version (expect CARGO 1.98.0, NOT rustup 1.29.0):"; cargo --version || true
-          echo "--- cargo +1.98.0 --version:"; cargo +1.98.0 --version || true
-          echo "--- TEST 1: original bridge pattern, -Z BEFORE build (help):"
-          RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --help 2>&1 | head -8 || true
-          echo "--- TEST 2: dummy build-std with original pattern (background, 60s):"
-          mkdir -p /tmp/dummy/src
-          printf '[package]\nname="dummy"\nversion="0.1.0"\nedition="2021"\n' > /tmp/dummy/Cargo.toml
-          printf 'fn main(){println!("hi");}\n' > /tmp/dummy/src/main.rs
-          RUSTC_BOOTSTRAP=1 cargo +1.98.0 -Z build-std=std,panic_unwind build --release --manifest-path /tmp/dummy/Cargo.toml --target arm64e-apple-ios --target-dir /tmp/dummy-target > /tmp/dummy-build.log 2>&1 &
-          BUILD_PID=$!
-          sleep 60
-          echo "--- dummy build log after 60s (first 12 lines):"
-          head -12 /tmp/dummy-build.log || true
-          kill $BUILD_PID 2>/dev/null || true
+          echo "--- what is /usr/local/bin/rustup (expect a small shim):"
+          file /usr/local/bin/rustup || true
+          wc -c /usr/local/bin/rustup || true
+          cat /usr/local/bin/rustup || true
+          echo "--- where is the real rustup binary:"
+          ls -la "$(brew --prefix)/Cellar/rustup/" 2>/dev/null || true
+          find "$(brew --prefix)/Cellar/rustup" -type f -name "rustup*" 2>/dev/null | head -5 || true
+          echo "--- TEST A: rustup run bypass (expect cargo 1.98.0):"
+          rustup run 1.98.0 cargo --version || true
+          echo "--- TEST B: rustup run bypass with -Z BEFORE build (expect cargo build help):"
+          RUSTC_BOOTSTRAP=1 rustup run 1.98.0 cargo -Z build-std=std,panic_unwind build --help 2>&1 | head -8 || true
+          echo "--- TEST C: direct toolchain cargo with -Z BEFORE build (expect cargo build help):"
+          TOOLCHAIN_CARGO="$HOME/.rustup/toolchains/1.98.0-x86_64-apple-darwin/bin/cargo"
+          ls -la "$TOOLCHAIN_CARGO" || true
+          RUSTC_BOOTSTRAP=1 "$TOOLCHAIN_CARGO" -Z build-std=std,panic_unwind build --help 2>&1 | head -8 || true
           echo "diag done"
