@@ -80,7 +80,7 @@ jobs:
             exit 1
           fi
       - name: seed cache identity
-        id: seed-key
+        id: seed-ke
         env:
           SEED: ${{ secrets.UNIXNU_UNIQUE_CHIP_ID }}
         run: |
@@ -147,7 +147,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installation-seed-${{ inputs.os }}
-          retention-days: 1
+          retention-days: 14
           path: |
             UniXNU/out/sheng/*/*/runtime/data.dbr
             UniXNU/out/sheng/*/*/runtime/inputs.json
@@ -155,7 +155,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: images-${{ inputs.os }}
-          retention-days: 1
+          retention-days: 14
           if-no-files-found: error
           path: |
             UniXNU/out/sheng/*/*/boot/boot.img
