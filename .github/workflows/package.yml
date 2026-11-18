@@ -72,8 +72,13 @@ jobs:
           # rustup toolchain install alone does not create the ~/.cargo/bin
           # proxies (Homebrew installs the rustup binary without rustup-init),
           # so put the toolchain's own bin dir on PATH for later steps.
-          echo "$(dirname "$(rustup which --toolchain 1.98.0 cargo)")" >> "$GITHUB_PATH"
-          export PATH="$(dirname "$(rustup which --toolchain 1.98.0 cargo)"):$PATH"
+                    # Homebrew's rustup has no rustup-init proxies, so create them:
+          # the bridge build calls `cargo +1.98.0`, which only the rustup
+          # proxy (not the raw toolchain cargo) can handle.
+          mkdir -p "$HOME/.cargo/bin"
+          ln -sf "$(command -v rustup)" "$HOME/.cargo/bin/cargo"
+          ln -sf "$(command -v rustup)" "$HOME/.cargo/bin/rustc"
+          export PATH="$HOME/.cargo/bin:$PATH"
           # Fail fast, naming the tool, before forty minutes of build.
           ok=1
           for t in clang xcodebuild make git ninja cmake dtc fdtget fdtput aea compression_tool \
