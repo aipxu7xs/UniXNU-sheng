@@ -53,12 +53,19 @@ jobs:
           submodules: recursive
       - name: tools
         run: |
-          brew install dtc llvm lld cmake mtools ninja glslang shaderc spirv-tools bison pkgconf rustup blacktop/tap/ipsw
+          brew install dtc llvm lld cmake mtools ninja glslang shaderc spirv-tools bison pkgconf rustup
+          # ipsw: the blacktop/tap cask no longer passes Homebrew's validator
+          # ("invalid 'zap' stanza"), so fetch the official release binary.
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o /tmp/ipsw.tgz "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_universal.tar.gz"
+          tar -xzf /tmp/ipsw.tgz -C "$HOME/.local/bin" ipsw
+          chmod +x "$HOME/.local/bin/ipsw"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           {
             echo "$HOME/.cargo/bin"
-            echo "/opt/homebrew/opt/llvm/bin"
-            echo "/opt/homebrew/opt/lld/bin"
-            echo "/opt/homebrew/opt/bison/bin"
+            echo "$(brew --prefix)/opt/llvm/bin"
+            echo "$(brew --prefix)/opt/lld/bin"
+            echo "$(brew --prefix)/opt/bison/bin"
           } >> "$GITHUB_PATH"
           rustup toolchain install 1.98.0 --profile minimal --component rust-src
           # Fail fast, naming the tool, before forty minutes of build.
@@ -68,7 +75,7 @@ jobs:
             command -v "$t" >/dev/null || { echo "missing tool: $t"; ok=0; }
           done
           for t in lld-link llvm-lib llvm-rc llvm-nm llvm-objcopy; do
-            [ -f "/opt/homebrew/opt/llvm/bin/$t" ] || [ -f "/opt/homebrew/opt/lld/bin/$t" ] || { echo "missing tool: $t"; ok=0; }
+            [ -f "$(brew --prefix)/opt/llvm/bin/$t" ] || [ -f "$(brew --prefix)/opt/lld/bin/$t" ] || { echo "missing tool: $t"; ok=0; }
           done
           [ "$ok" = 1 ]
       - name: platform seed
