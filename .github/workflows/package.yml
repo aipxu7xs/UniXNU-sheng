@@ -60,6 +60,7 @@ jobs:
           curl -fsSL -o /tmp/ipsw.tgz "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_universal.tar.gz"
           tar -xzf /tmp/ipsw.tgz -C "$HOME/.local/bin" ipsw
           chmod +x "$HOME/.local/bin/ipsw"
+                    export PATH="$HOME/.local/bin:$PATH"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           {
             echo "$HOME/.cargo/bin"
