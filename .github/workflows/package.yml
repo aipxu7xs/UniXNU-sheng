@@ -60,7 +60,7 @@ jobs:
           curl -fsSL -o /tmp/ipsw.tgz "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_universal.tar.gz"
           tar -xzf /tmp/ipsw.tgz -C "$HOME/.local/bin" ipsw
           chmod +x "$HOME/.local/bin/ipsw"
-                    export PATH="$HOME/.local/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           {
             echo "$HOME/.cargo/bin"
@@ -72,7 +72,7 @@ jobs:
           # rustup toolchain install alone does not create the ~/.cargo/bin
           # proxies (Homebrew installs the rustup binary without rustup-init),
           # so put the toolchain's own bin dir on PATH for later steps.
-                    # Homebrew's rustup has no rustup-init proxies, so create them:
+          # Homebrew's rustup has no rustup-init proxies, so create them:
           # the bridge build calls `cargo +1.98.0`, which only the rustup
           # proxy (not the raw toolchain cargo) can handle.
           mkdir -p "$HOME/.cargo/bin"
@@ -179,6 +179,16 @@ jobs:
             UniXNU/out/sheng/ipados-27.0.1-24A446/sheng_ipados27/runtime/data.dbr
             UniXNU/out/sheng/ipados-27.0.1-24A446/sheng_ipados27/runtime/inputs.json
           key: ${{ steps.seed-key.outputs.key }}-${{ inputs.os }}
+      - name: build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-27
+          path: |
+            UniXNU/out/**/logs
+            UniXNU/out/**/lto-build.log
+          if-no-files-found: ignore
+          retention-days: 14
       - name: installation seed backup
         if: always() && inputs.os == '27' && hashFiles('UniXNU/out/sheng/ipados-27.0.1-24A446/sheng_ipados27/runtime/data.dbr') != ''
         uses: actions/upload-artifact@v4
