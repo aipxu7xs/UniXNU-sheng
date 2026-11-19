@@ -9,6 +9,8 @@ import posixpath
 import re
 import subprocess
 import shutil
+import time
+import urllib.error
 import urllib.request
 
 COMMIT = '42f3b40c702abbc37c3a04c95af008cd283aeaf3'
@@ -22,7 +24,15 @@ INCLUDE = re.compile(r'^\s*#\s*include\s*([<"])([^>"\n]+)[>"]', re.M)
 def fetch(name):
     destination = ROOT / name
     if not destination.exists() and not destination.is_symlink():
-        data = urllib.request.urlopen(BASE + name, timeout=30).read()
+        data = None
+        for attempt in range(4):
+            try:
+                data = urllib.request.urlopen(BASE + name, timeout=30).read()
+                break
+            except urllib.error.URLError:
+                if attempt == 3:
+                    raise
+                time.sleep(5 * (attempt + 1))
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(data)
     data = (os.readlink(destination).encode() if destination.is_symlink()
