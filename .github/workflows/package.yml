@@ -149,6 +149,7 @@ jobs:
           if [ ! -d drivers/Ath12kWifi/deps/freebsd/.git ]; then
             git init -q drivers/Ath12kWifi/deps/freebsd
             git -C drivers/Ath12kWifi/deps/freebsd remote add origin https://github.com/freebsd/freebsd-src.git
+            git -C drivers/Ath12kWifi/deps/freebsd sparse-checkout init --cone
             git -C drivers/Ath12kWifi/deps/freebsd fetch -q --depth 1 --filter=blob:none origin "$FREEBSD_COMMIT"
             git -C drivers/Ath12kWifi/deps/freebsd checkout -q FETCH_HEAD
           fi
