@@ -142,7 +142,17 @@ jobs:
           PY
       - name: fetch Ath12kWifi sources
         working-directory: device
-        run: python3 drivers/Ath12kWifi/tools/fetch-sources.py
+        run: |
+          # releng/15.1 is a moving branch; fetch-sources.py clones the branch tip but
+          # the lock pins an older commit, so pre-seed the exact locked FreeBSD commit.
+          FREEBSD_COMMIT=95719d8a895bf8170851e9844d9b4092b1d2b6fe
+          if [ ! -d drivers/Ath12kWifi/deps/freebsd/.git ]; then
+            git init -q drivers/Ath12kWifi/deps/freebsd
+            git -C drivers/Ath12kWifi/deps/freebsd remote add origin https://github.com/freebsd/freebsd-src.git
+            git -C drivers/Ath12kWifi/deps/freebsd fetch -q --depth 1 --filter=blob:none origin "$FREEBSD_COMMIT"
+            git -C drivers/Ath12kWifi/deps/freebsd checkout -q FETCH_HEAD
+          fi
+          python3 drivers/Ath12kWifi/tools/fetch-sources.py
       - name: package
         working-directory: device
         env:
